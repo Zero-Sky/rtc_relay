@@ -86,7 +86,6 @@ static void key_deal_s(u8 key_now)
 		case 6:btn_right();break;
 		default:break;
 	}	
-	beep_on_one();
 }
 
 /************************************************************************/

@@ -167,6 +167,17 @@ static void gui_led_flash(u8 offset)
 	}
 }
 /************************************************************************/
+/* 功能：显示设置序号
+ * 描述：
+ * 形参：
+ * 返回：                  */
+/************************************************************************/
+static void gui_led_num(u8 dat)
+{
+	buf_gui[15] = pgm_read_byte(&mem_led_num[dat]);
+}
+
+/************************************************************************/
 /* 功能：显示温度
  * 描述：范围-9.9~99.9度
  * 形参：
@@ -228,20 +239,11 @@ static void gui_led_temperature(vs16 data)
 	if (status == TEMP)
 	{
 		gui_led_run();
+		gui_led_num(4);
 		buf_gui[0]=buf_gui[1]=buf_gui[6]=buf_gui[7]=buf_gui[8]=buf_gui[14]=0x40;
 	}
 }
 
-/************************************************************************/
-/* 功能：显示继电器序号
- * 描述：
- * 形参：
- * 返回：                  */
-/************************************************************************/
-static void gui_led_num(u8 dat)
-{
-	buf_gui[15] = pgm_read_byte(&mem_led_num[dat]);
-}
 
 /************************************************************************/
 /* 功能：显示当前真实时间
@@ -269,6 +271,7 @@ static void gui_led_rtc(void)
 		gui_led_min(time[1].min10, time[1].min1);
 		gui_led_sec(time[1].sec10, time[1].sec1);		
 	}
+	gui_led_num(0);
 }
 
 /************************************************************************/
@@ -283,7 +286,7 @@ static void gui_led_alarm(void)
 
 	if(offset <=0)		return;
 	//闹钟序号，1~9
-	buf_gui[15] = pgm_read_byte(&mem_led_num[offset]);	
+	buf_gui[13] = pgm_read_byte(&mem_led_num[offset]);	
 
 	if (alarm[offset-1].enable)		gui_led_run();		
 	else							gui_led_stop();
@@ -291,6 +294,8 @@ static void gui_led_alarm(void)
 	gui_led_hour(alarm[offset-1].hour10,alarm[offset-1].hour1);
 	gui_led_min(alarm[offset-1].min10, alarm[offset-1].min1);
 	gui_led_sec(0, 0);
+
+	gui_led_num(5);
 }
 
 /************************************************************************/

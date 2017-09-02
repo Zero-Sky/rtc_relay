@@ -109,11 +109,16 @@ void task_alarm(void)
 				//alarm[i].open = 1;
 				ext.alarm_beep = 1;
 			}
-			else
+		#if 0
+			else if((time[0].hour10 != alarm[i].hour10) \
+			|| (time[0].hour1 != alarm[i].hour1) \
+			|| (time[0].min10 != alarm[i].min10) \
+			|| (time[0].min1 != alarm[i].min1) \
 			{
 				//alarm[i].open = 0;
 				ext.alarm_beep = 0;
 			}
+		#endif
 		}
 	}	
 }

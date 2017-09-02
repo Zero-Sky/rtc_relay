@@ -191,7 +191,7 @@ static void argv_set(u8 set)
 	{
 		switch(ext.gui_offset)
 		{
-			case 7:alarm_num_set(set);break;
+			case 8:alarm_num_set(set);break;
 			case 4:alarm_hour_set(set);break;
 			case 5:alarm_min_set(set);break;
 			default:break;
@@ -229,10 +229,11 @@ void btn_set(void)
 		case RELAY1:status_to(RELAY2);ext.relay=2;break;
 		case RELAY2:status_to(RELAY3);ext.relay=3;break;
 		case RELAY3:status_to(TEMP);ext.gui_offset=8;break;
-		case TEMP:status_to(ALARM);ext.alarm=1;ext.gui_offset=7;break;
+		case TEMP:status_to(ALARM);ext.alarm=1;ext.gui_offset=8;break;
 		case ALARM:status_to(START);break;
 		default:break;
 	}
+	beep_on_one();
 }
 
 /************************************************************************/
@@ -244,6 +245,7 @@ void btn_set(void)
 void btn_up(void)
 {
 	argv_set(1);
+	beep_on_one();
 }
 
 /************************************************************************/
@@ -255,6 +257,7 @@ void btn_up(void)
 void btn_down(void)
 {
 	argv_set(0);
+	beep_on_one();
 }
 /************************************************************************/
 /* 功能：参数保存
@@ -273,12 +276,15 @@ void btn_save(void)
 	{
 		status_to(START);
 	}
-	else
+	else if (status_between(RELAY1,ALARM))
 	{
-		rtc_write_time(time[1]);
 		eeprom_record();
 	}
-
+	else if((status == START)&&(ext.gui_offset))
+	{
+		rtc_write_time(time[1]);	
+	}
+	beep_on_one();
 	if(ext.alarm_beep)		ext.alarm_beep=0;
 }
 
@@ -298,6 +304,7 @@ void btn_start(void)
 		case ALARM:alarm[ext.alarm-1].enable=~alarm[ext.alarm-1].enable;break;
 		default:break;
 	}
+	beep_on_one();
 }
 /************************************************************************/
 /* 功能：右移
@@ -350,7 +357,7 @@ void btn_right(void)
 	}
 	else if(status == ALARM)
 	{
-		if (ext.gui_offset==7)
+		if (ext.gui_offset==8)
 		{
 			ext.gui_offset=4;
 		}
@@ -360,9 +367,10 @@ void btn_right(void)
 		}
 		else
 		{
-			ext.gui_offset=7;
+			ext.gui_offset=8;
 		}	
 	}
+	beep_on_one();
 }
 
 /************************************************************************/
