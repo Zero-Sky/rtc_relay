@@ -54,7 +54,7 @@ void beep_on(BEEP_t last,BEEP_t delay,s8 times)
 	beep.delay_off = delay;
 	beep.times = times;
 	beep.stat = 0;
-	freq.delay_beep = beep.delay_on;
+	gbvar_set(GB_BEEP,beep.delay_on);
 }
 
 /************************************************************************/
@@ -101,16 +101,14 @@ void task_beep(void)
 {
 	//if(beep.times > 0)			
 	//	return;
-  	if(freq.delay_beep)			//还在延时中，不运行
-	  	return;
-
+	if(gbvar_get(GB_BEEP))	return;
 
 	//if(beep.stat)										//调用时候/之前蜂鸣器是响的，
 	if(beep.open)
 	{
 		beep.open = 0;									//发送蜂鸣器关闭事件
 		beep.stat = 0;									//报告蜂鸣器已经不响
-		freq.delay_beep = beep.delay_off;				//赋值蜂鸣器不响的间隔是beep.off
+		gbvar_set(GB_BEEP,beep.delay_off);				//赋值蜂鸣器不响的间隔是beep.off
 	}
 	//else if(beep.stat == 0)								//第一次/本次运行前，蜂鸣器没有响，那么检测是否能打开
 	else if(beep.open == 0)
@@ -120,7 +118,7 @@ void task_beep(void)
 			beep.times--;									//本次次数减1
 			beep.open = 1;								//发送蜂鸣器开始事件
 			beep.stat = 1;								//报告蜂鸣器已经响了	
-			freq.delay_beep = beep.delay_on;		//赋值本次开启的持续时间，即beep.on后再次运行判断
+			gbvar_set(GB_BEEP,beep.delay_on);		//赋值本次开启的持续时间，即beep.on后再次运行判断
 		}
 	//	else											//没有次数l
 	//	{
@@ -142,18 +140,7 @@ void beep_init(void)
 /************************************************************************/
 void interrupt_beep(void)
 {
-  	if(beep.open) 
-	{
-		if (PORTD&0x40)
-		{
-			PORTD &=~0x40;
-		}
-		else
-		{
-			PORTD |=0x40;
-		}
-	}
-	else if(ext.alarm_beep)
+  	if( (beep.open) ||(gbvar_get(GB_ALARM_OPEN)) )
 	{
 		if (PORTD&0x40)
 		{

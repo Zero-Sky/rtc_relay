@@ -49,13 +49,14 @@ void key_deal_l(void)
   	if(key.press_long)
 	{
 		os.prompt=1;
-        freq.shut = 0;          //防止超限
+        gbvar_set(GB_SLEEP, OS_MIN_5);
 		switch(key.soft)
 		{
 			case 2:btn_up();break;
 			case 5:btn_down();break;
 			case 6:btn_right();break;
 			//case 20:btn_sleep();break;
+			case 1:btn_set_input();break;
 			default:break;
 		}
 	}
@@ -80,7 +81,7 @@ static void key_deal_s(u8 key_now)
 	{
 		case 1:btn_set();break;
 		case 2:btn_up();break;
-		case 3:btn_save();break;
+		case 3:btn_ext();break;
 		case 4:btn_start();break;
 		case 5:btn_down();break;
 		case 6:btn_right();break;
@@ -102,18 +103,20 @@ void key_deal(void)
 
 	if((key_now == key.soft) && (key_now !=0)) 	//等于上一个键值，即按键未松开
 	{
-		if(freq.delay_key >= DELAY_KEY) 				//是否是长按键
+		if(gbvar_get(GB_KEY_L1) == 0) 				//是否是长按键
 		{
 		  	key.press_long = 1;						//长按键使能
-			freq.shut = 0;
+			gbvar_set (GB_SLEEP, OS_MIN_5);
 		}
 	}
 	else if(key_now != key.soft) 					//键值不等，包括松开(键值0)和新按键
 	{
-		freq.delay_key = 0;								//长按键计时关闭
-		key.press_long = 0;								//短按键关闭长按键任务	
-		freq.shut = 0;									//待机计时关闭
+		gbvar_set(GB_KEY_L1,OS_SEC_2);
+		gbvar_set(GB_KEY_L2,OS_SEC_5);							//长按键计时关闭
+		gbvar_set(GB_SLEEP, OS_MIN_5);							//待机计时关闭
+		gbvar_set(GB_WAIT, OS_SEC_30);
 
+		key.press_long = 0;								//短按键关闭长按键任务	
 		if(key_now != 0) 								//不是松开
 		{
 			//key_deal_d(key.prev_soft,key_now);		//顺序按下的组合键调用		
@@ -150,7 +153,7 @@ void key_get(u8 key_x,u8 key_y)
 		//case 0x0906:key_now = 20;break;
 		default:key_now = 0;break;
 	}
-	ext.debug=key_now;
+
 	if(key_now == key.hard)		//判断两次扫描的键值是否一致，排除抖动
 	{
 		key.ok = 1;					//一致，不是抖动，开始处理本次按键

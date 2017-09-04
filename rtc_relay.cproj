@@ -124,6 +124,7 @@
   <ItemGroup>
     <Folder Include="APP\driver\" />
     <Folder Include="APP" />
+    <Folder Include="APP\os" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="APP\board.c">
@@ -196,6 +197,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="APP\main.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="APP\os\gbval.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="APP\os\gbval.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="APP\storage.c">

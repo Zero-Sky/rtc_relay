@@ -183,6 +183,7 @@ void rtc_write_time(RTC_t data)
 void ds1302_init(void)
 {
 	ds1302_w_data(0x8E,0,0);
+	ds1302_w_data(0x80,0,0);
 } 
 /************************************************************************
  * 功能：DEBUG
@@ -201,5 +202,7 @@ void ds1302_debug(void)
 	ds1302_r_data(0xC1,ten,unit);
 	DS1302_RST_L;
 	ds1302_delay();
-	ext.debug = (*ten<<4) + *unit;	
+	
+	u16 debug = (*ten<<4) + *unit;
+	gbvar_set(GB_DEBUG,debug);	
 }

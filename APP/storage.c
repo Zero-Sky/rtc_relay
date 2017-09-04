@@ -13,7 +13,8 @@
  * 转换小程序在LittleTools中 
  ************************************************************************/
 
-PROGMEM const u8 mem_led_num[]=	{	0x3F,				//0
+PROGMEM const u8 mem_led_num[]=	{	
+							0x3F,				//0
                       		0x06,				//1
                      		0x5B,				//2
                       		0x4F,				//3
@@ -31,5 +32,6 @@ PROGMEM const u8 mem_led_num[]=	{	0x3F,				//0
 							0x3E,				//U--14
 							0x50, 				//r--15
 							0x40,				//---16
+							0x37,				//N--17
 					  		};
 

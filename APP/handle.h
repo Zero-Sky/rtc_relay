@@ -12,8 +12,9 @@ void btn_set(void);
 void btn_up(void);
 void btn_down(void);
 void btn_right(void);
-void btn_save(void);
+void btn_ext(void);
 void btn_start();
 void btn_sleep(void);
+void btn_set_input(void);
 
 #endif

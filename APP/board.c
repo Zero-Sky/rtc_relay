@@ -34,9 +34,13 @@ static void gpio_init(void)
 	//DS18B20 PD7
 	DDRD |=1<<7; 
 
-	//继电器PC4 PC5 PD0
+	//继电器PC4 PC5 PD0 PD1 PD2 PD3
 	DDRC |=0x30;
-	DDRD |=0x01;
+	DDRD |=0x0F;
+
+	PORTD|=0x08; PORTD &=~0x01;
+	PORTD|=0x04; PORTC &=~0x20;
+	PORTD|=0x02; PORTC &=~0x10;
 }
 
 /************************************************************************/

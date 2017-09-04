@@ -26,32 +26,49 @@ static s8 value_set(u8 set, s8 value, s8 min, s8 max)
 /************************************************************************/
 /* 功能：继电器时，分设置
  * 描述：
- * 形参：1=加，0=减
+ * 形参：设置0号还是1号时间，1=加，0=减
  * 返回：                            */
 /************************************************************************/
-static void relay_hour_set(u8 set)
+static void relay_hour_set(u8 offset,u8 set)
 {
-	s8 num = ext.relay-1;
-	s8 hour = relay[num].hour10*10 + relay[num].hour1;
+	s8 num = gbvar_get(GB_RELAY)-1;
+	s8 hour = relay[num].time[offset].hour10*10 + relay[num].time[offset].hour1;
 
 	hour = value_set(set, hour, 0, 23);
 
-	relay[num].hour10 = hour/10;
-	relay[num].hour1 = hour%10;
+	relay[num].time[offset].hour10 = hour/10;
+	relay[num].time[offset].hour1 = hour%10;
 }
 
-static void relay_min_set(u8 set)
+static void relay_min_set(u8 offset, u8 set)
 {
-	s8 num = ext.relay-1;
-	s8 min = relay[num].min10*10 + relay[num].min1;
+	s8 num = gbvar_get(GB_RELAY)-1;
+	s8 min = relay[num].time[offset].min10*10 + relay[num].time[offset].min1;
 
 	min = value_set(set, min, 0, 59);
 
-	relay[num].min10 = min/10;
-	relay[num].min1 = min%10;
+	relay[num].time[offset].min10 = min/10;
+	relay[num].time[offset].min1 = min%10;
 }
+/************************************************************************/
+/* 功能：继电器时温度报警
+ * 描述：温度为0时不会工作
+ * 形参：1=加，0=减
+ * 返回：                            */
+/************************************************************************/
+static void relay_temp_set(u8 set)
+{
+	s8 num = gbvar_get(GB_RELAY)-1;
+	s16 value = relay[num].temperature;
 
+	if(set)		value +=10;
+	else 		value -=10;
+	
+	if(value>1200)		value = -300;
+	else if(value<-300)	value = 1200;
 
+	relay[num].temperature = value;
+}
 /************************************************************************/
 /* 功能：闹钟设置
  * 描述：
@@ -60,16 +77,16 @@ static void relay_min_set(u8 set)
 /************************************************************************/
 static void alarm_num_set(u8 set)
 {
-	s8 num = ext.alarm;
+	s8 num = gbvar_get(GB_ALARM);
 
 	num = value_set(set, num, 1, 9);
 
-	ext.alarm = num;
+	gbvar_set(GB_ALARM,num);
 }
 
 static void alarm_hour_set(u8 set)
 {
-	s8 num = ext.alarm-1;
+	s8 num = gbvar_get(GB_ALARM)-1;
 	s8 hour = alarm[num].hour10*10 + alarm[num].hour1;
 
 	hour = value_set(set, hour, 0, 23);
@@ -80,7 +97,7 @@ static void alarm_hour_set(u8 set)
 
 static void alarm_min_set(u8 set)
 {
-	s8 num = ext.alarm-1;
+	s8 num = gbvar_get(GB_ALARM)-1;
 	s8 min = alarm[num].min10*10 + alarm[num].min1;
 
 	min = value_set(set, min, 0, 59);
@@ -177,19 +194,23 @@ static void temperature_set(u8 set)
 /************************************************************************/
 static void argv_set(u8 set)
 {
-	freq.noflash = OS_SEC_3;
+	gbvar_set(GB_NOFLASH, OS_SEC_3);
+	u16 offset = gbvar_get(GB_GUI_OFFSET);
 	if (status_between(RELAY1,RELAY3))
 	{
-		switch(ext.gui_offset)
+		switch(offset)
 		{
-			case 4:relay_hour_set(set);break;
-			case 5:relay_min_set(set);break;
+			case 1:relay_hour_set(0,set);break;
+			case 2:relay_min_set(0,set);break;
+			case 4:relay_hour_set(1,set);break;
+			case 5:relay_min_set(1,set);break;
+			case 8:relay_temp_set(set);break;
 			default:break;
 		}
 	}
 	else if(status == ALARM)
 	{
-		switch(ext.gui_offset)
+		switch(offset)
 		{
 			case 8:alarm_num_set(set);break;
 			case 4:alarm_hour_set(set);break;
@@ -201,9 +222,9 @@ static void argv_set(u8 set)
 	{
 		temperature_set(set);
 	}
-	else if (status == START)
+	else if (status == CLOCK)
 	{
-		switch(ext.gui_offset)
+		switch(offset)
 		{
 			case 1:rtc_year_set(set);break;
 			case 2:rtc_month_set(set);break;
@@ -214,6 +235,10 @@ static void argv_set(u8 set)
 			default:break;
 		}
 	}
+	if(gbvar_get(GB_GUI_OFFSET) == 0)
+		beep_on_alarm();
+	else if(gbvar_get(GB_KEY_L1))
+		beep_on_one();
 }
 /************************************************************************/
 /* 功能：进入相关设置
@@ -223,14 +248,19 @@ static void argv_set(u8 set)
 /************************************************************************/
 void btn_set(void)
 {
+	if(status == SHOW)		return;
+
 	switch(status)
 	{
-		case START:status_to(RELAY1);ext.relay=1;break;
-		case RELAY1:status_to(RELAY2);ext.relay=2;break;
-		case RELAY2:status_to(RELAY3);ext.relay=3;break;
-		case RELAY3:status_to(TEMP);ext.gui_offset=8;break;
-		case TEMP:status_to(ALARM);ext.alarm=1;ext.gui_offset=8;break;
-		case ALARM:status_to(START);break;
+		case CLOCK:status_to(RELAY1);gbvar_set(GB_RELAY,1);break;
+		case RELAY1:status_to(RELAY2);gbvar_set(GB_RELAY,2);break;
+		case RELAY2:status_to(RELAY3);gbvar_set(GB_RELAY,3);break;
+	#if 0
+		case RELAY3:status_to(TEMP);gbvar_set(GB_GUI_OFFSET,8);break;
+		case TEMP:status_to(ALARM);gbvar_set(GB_ALARM,1);gbvar_set(GB_GUI_OFFSET,8);break;
+	#endif
+		case RELAY3:status_to(ALARM);gbvar_set(GB_ALARM,1);gbvar_set(GB_GUI_OFFSET,8);break;
+		case ALARM:status_to(SHOW);break;
 		default:break;
 	}
 	beep_on_one();
@@ -244,8 +274,8 @@ void btn_set(void)
 /************************************************************************/
 void btn_up(void)
 {
+	if(status == SHOW)		return;
 	argv_set(1);
-	beep_on_one();
 }
 
 /************************************************************************/
@@ -256,36 +286,26 @@ void btn_up(void)
 /************************************************************************/
 void btn_down(void)
 {
+	if(status == SHOW)		return;
 	argv_set(0);
-	beep_on_one();
 }
 /************************************************************************/
-/* 功能：参数保存
+/* 功能：额外功能
  * 描述：
  * 形参：
  * 返回：                            */
 /************************************************************************/
-void btn_save(void)
+void btn_ext(void)
 {
-	beep_on_one();
-	if((status == START)&&(ext.gui_offset == 0))
+	if(gbvar_get(GB_ALARM_OPEN))		gbvar_clr(GB_ALARM_OPEN);
+	else
 	{
-		status_to(SLEEP);
+		beep_on_one();
+		if((status == SHOW) )
+			status_to(SLEEP);
+		else if(status == SLEEP)
+			status_to(SHOW);
 	}
-	else if(status == SLEEP)
-	{
-		status_to(START);
-	}
-	else if (status_between(RELAY1,ALARM))
-	{
-		eeprom_record();
-	}
-	else if((status == START)&&(ext.gui_offset))
-	{
-		rtc_write_time(time[1]);	
-	}
-	beep_on_one();
-	if(ext.alarm_beep)		ext.alarm_beep=0;
 }
 
 /************************************************************************/
@@ -296,12 +316,14 @@ void btn_save(void)
 /************************************************************************/
 void btn_start(void)
 {
+	if(status == SHOW)		return;
+	u16 offset = gbvar_get(GB_ALARM) - 1;
 	switch(status)
 	{
 		case RELAY1:relay[0].enable = ~relay[0].enable;break;
 		case RELAY2:relay[1].enable = ~relay[1].enable;break;
 		case RELAY3:relay[2].enable = ~relay[2].enable;break;
-		case ALARM:alarm[ext.alarm-1].enable=~alarm[ext.alarm-1].enable;break;
+		case ALARM:alarm[offset].enable=~alarm[offset].enable;break;
 		default:break;
 	}
 	beep_on_one();
@@ -314,62 +336,51 @@ void btn_start(void)
 /************************************************************************/
 void btn_right(void)
 {
-#if 0
-	for(u8 i=0; i<9; i++)
-	{
-		if(alarm[i].open)
-			alarm[i].open = 0;
-		return;
-	}
-#endif
-	freq.noflash=0;
+	if(status == SHOW)		return;
 
-	if (status == START)
+	gbvar_clr(GB_NOFLASH);
+
+	u16 offset = gbvar_get(GB_GUI_OFFSET);
+	if (status == CLOCK)
 	{	
-		if (ext.gui_offset == 0)
+		if (offset == 0)
 		{
-			time[1] = time[0];		//第一次进入时复制
-			ext.gui_offset++;
+			offset++;
 		}
-		else if(ext.gui_offset>=6)
+		else if(offset>=6)
 		{
-			ext.gui_offset=0;
+			offset=0;
 		}
 		else
 		{
-			ext.gui_offset++;
+			offset++;
 		}
 	}
 	else if (status_between(RELAY1,RELAY3))
 	{
-		if (ext.gui_offset==0)
-		{
-			ext.gui_offset=4;
-		} 
-		else if (ext.gui_offset==4)
-		{
-			ext.gui_offset=5;
-		}
-		else
-		{
-			ext.gui_offset=0;
-		}
+		if(offset == 0)			offset=1;
+		else if(offset == 1)	offset=2;
+		else if(offset == 2)	offset=4;
+		else if(offset == 4)	offset=5;
+		else if(offset == 5)	offset=8;
+		else 					offset=0;
 	}
 	else if(status == ALARM)
 	{
-		if (ext.gui_offset==8)
+		if (offset==8)
 		{
-			ext.gui_offset=4;
+			offset=4;
 		}
-		else if (ext.gui_offset==4)
+		else if (offset==4)
 		{
-			ext.gui_offset=5;
+			offset=5;
 		}
 		else
 		{
-			ext.gui_offset=8;
+			offset=8;
 		}	
 	}
+	gbvar_set(GB_GUI_OFFSET,offset);
 	beep_on_one();
 }
 
@@ -382,4 +393,19 @@ void btn_right(void)
 void btn_sleep(void)
 {
 
+}
+/************************************************************************/
+/* 功能：进入设置界面
+ * 描述：
+ * 形参：
+ * 返回：                            */
+/************************************************************************/
+void btn_set_input(void)
+{
+	if(status == SHOW)
+	{
+		status_to(CLOCK);
+		beep_on_one();
+		time[1] = time[0];		//第一次进入时复制
+	}
 }

@@ -8,6 +8,15 @@
 #ifndef _DATA_H_
 #define _DATA_H_
 
+//时分设置结构体
+typedef struct
+{
+	vu8			min1;		
+	vu8			min10;
+	vu8			hour1;
+	vu8			hour10;
+}HM_t;
+
 
 //实时时钟，不支持12/24小时
 //因为ds1302采用BCD存储，所以这里也改成BCD
@@ -37,8 +46,6 @@ typedef struct
 	vu8			min10;
 	vu8			hour1;
 	vu8			hour10;
-	vu8 		date;			//日期
-	///////////////////////////////
 }ALARM_t;
 
 
@@ -55,15 +62,13 @@ typedef struct
 	vs16		max;				//最大显示值
 }TEMP_t;
 
-//继电器控制，3组
+//继电器控制，6组，12，34,56分别对应123继电器
 typedef struct
 {
-	vu8 		enable;		//=1，使能
-	vu8  		open;		//=1,继电器开
-	vu8			min1;		//何时打开
-	vu8			min10;
-	vu8			hour1;
-	vu8			hour10;	
+	vu8 		enable;			//=1，使能
+	vu8  		open;			//=1,继电器开
+	HM_t		time[2];		//0是开启时间，1是关闭时间	
+	vs16			temperature;	//高于该温度停止，=0时无效,-128~127
 }RELAY_t;
 
 
@@ -72,13 +77,14 @@ typedef struct
  *************************************************************************/
 typedef enum  
 {
-	START,			//没有设置时
+	SHOW,			//没有设置时，正常显示
+	CLOCK,			//时钟设置
 	RELAY1,			//继电器,内部3个
 	RELAY2,
 	RELAY3,
 	TEMP,				//温度
 	ALARM,				//闹钟
-	SLEEP
+	SLEEP				//熄灭屏幕
 }STATUS_t;
 
 /************************************************************************/
@@ -87,51 +93,6 @@ typedef enum
 int status_between(STATUS_t smaller, STATUS_t bigger);
 void status_to(STATUS_t sta);
 
-/************************************************************************/
-/* 系统参数，用于保存系统默认参数等等                                   */
-/************************************************************************/
-struct SYS_t
-{
-	u8 	ds18b20;				//ds18b20,=0不存在，=1存在
-};
-
-
-/************************************************************************/
-/* 事件，用于和中断的通讯，不包括定时                                  */
-/************************************************************************/
-struct EVENT_t
-{	
-	volatile u8 motor_ok;		//完整的接收到一次完整的下控变频器/调速器数据
-	vu32 		mbox[2];		//64个消息队列		
-};
-
-/************************************************************************/
-/* 通讯，和中断无关的全局变量                                 */
-/************************************************************************/
-struct EXT_t
-{
-	vs16		debug;
-	vs16 		gui_offset;				//当前GUI偏移	
-	vu8			alarm;					//当前闹钟序号,1开始 
-	vu8			alarm_beep;				//蜂鸣器闹钟	
-	vu8			relay;					//当前继电器序号，1开始		
-	vu8			save;					//数据有修改，需要保存到eeprom	
-};
-
-/************************************************************************/
-/* 定时，用于计算时间用的。                              */
-/************************************************************************/
-struct FREQ_t
-{
-	volatile u8 		flash;				//只用于半秒闪烁，但不是所有的半秒闪烁
-	volatile u16 		noflash;			//按键按下后对应设置界面保存一段时间不闪烁"NOFLASH"s
-
-	volatile u32		shut;				//关闭计时，也用于启动时的计时
-
-	volatile u16		delay_beep;			//蜂鸣器计时
-	volatile u16 		delay_key;			//按键长按定时
-
-};
 
 /************************************************************************/
 /* 用于模拟OS任务的定时变量                              */
@@ -155,14 +116,10 @@ struct OS_t
 extern RTC_t				time[2];		//0是当前，1是设置
 extern ALARM_t 				alarm[MAX_ALARM];
 extern TEMP_t 				temperature;
-extern RELAY_t 				relay[3];
+extern RELAY_t 				relay[6];
 
 extern   	  STATUS_t		status;
 
-extern struct EVENT_t  		event;
-extern struct FREQ_t 		freq;
-extern struct SYS_t			sys;
-extern struct EXT_t 		ext;
 extern struct OS_t			os;
 
 #endif

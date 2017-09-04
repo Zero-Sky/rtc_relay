@@ -9,31 +9,32 @@
 
 
 /************************************************************************/
-/* 功能：温度任务
- * 描述：报警，停止，计算
- * 形参：
+/* 功能：启动关闭继电器及其LED
+ * 描述：
+ * 形参：继电器组数；1=开启，0=停止
  * 返回：  */
 /************************************************************************/
-void task_temperature(void)
+static void relay_switch(u8 num, u8 open)
 {
-	if(sys.ds18b20 == 0)	return;
-	//3次读取比较，取
-	cli();
-	temperature.cur = ds18B20_get_temp();
-	sei();
-
-	if(temperature.cur >= temperature.max_stop)
+	if (open)
 	{
-		for(u8 i=0; i<3; i++)
+		switch(num)
 		{
-			if(relay[i].enable)
-			{
-				relay[i].open = 0;
-			}
-		}		
+			case 0:PORTD|=0x01;break;
+			case 1:PORTC|=0x20;break;
+			case 2:PORTC|=0x10;break;
+		}
+	}
+	else
+	{
+		switch(num)
+		{
+			case 0:PORTD &=~0x01;break;
+			case 1:PORTC &=~0x20;break;
+			case 2:PORTC &=~0x10;break;		
+		}
 	}
 }
-
 
 /************************************************************************/
 /* 功能：继电器任务
@@ -47,34 +48,53 @@ void task_relay(void)
 	{
 		if(relay[i].enable)
 		{
-			if((time[0].hour10 == relay[i].hour10) \
-			&&(time[0].hour1 == relay[i].hour1) \
-			&&(time[0].min10 == relay[i].min10) \
-			&&(time[0].min1 == relay[i].min1) \
+			if((time[0].hour10 == relay[i].time[0].hour10) \
+			&&(time[0].hour1 == relay[i].time[0].hour1) \
+			&&(time[0].min10 == relay[i].time[0].min10) \
+			&&(time[0].min1 == relay[i].time[0].min1) \
 			&&(time[0].sec10 == 0) \
 			&&(time[0].sec1 == 0))
 			{
 				relay[i].open = 1;
-				switch(i)
-				{
-					case 0:PORTD |=0x01;break;
-					case 1:PORTC |=0x20;break;
-					case 2:PORTC |=0x10;break;
-				}
 			}
-		}
-
-		if(relay[i].open == 0)
-		{
-			switch(i)
+			else if((time[0].hour10 == relay[i].time[1].hour10) \
+			&&(time[0].hour1 == relay[i].time[1].hour1) \
+			&&(time[0].min10 == relay[i].time[1].min10) \
+			&&(time[0].min1 == relay[i].time[1].min1) \
+			&&(time[0].sec10 == 0) \
+			&&(time[0].sec1 == 0))
 			{
-				case 0:PORTD &=~0x01;break;
-				case 1:PORTC &=~0x20;break;
-				case 2:PORTC &=~0x10;break;
+				relay[i].open = 0;
 			}
+			//温度设置不为0时有效
+			else if ((temperature.cur >= relay[i].temperature)&&(relay[i].temperature))
+			{
+				relay[i].open = 0;
+			}	
 		}
-	}	
+		else
+		{
+			relay[i].open = 0;
+		}
+		relay_switch(i, relay[i].open);
+	}
 }
+
+/************************************************************************/
+/* 功能：温度任务
+ * 描述：报警，停止，计算
+ * 形参：
+ * 返回：  */
+/************************************************************************/
+void task_temperature(void)
+{
+	if(gbvar_get(GB_DS18B20) == 0)	return;
+	//3次读取比较，取
+	cli();
+	temperature.cur = ds18B20_get_temp();
+	sei();
+}
+
 /************************************************************************/
 /* 功能：时间任务
  * 描述：读取时间
@@ -107,7 +127,7 @@ void task_alarm(void)
 			)
 			{
 				//alarm[i].open = 1;
-				ext.alarm_beep = 1;
+				gbvar_increase(GB_ALARM_OPEN);
 			}
 		#if 0
 			else if((time[0].hour10 != alarm[i].hour10) \
@@ -116,7 +136,6 @@ void task_alarm(void)
 			|| (time[0].min1 != alarm[i].min1) \
 			{
 				//alarm[i].open = 0;
-				ext.alarm_beep = 0;
 			}
 		#endif
 		}
@@ -130,15 +149,12 @@ void task_alarm(void)
 /************************************************************************/
 void task_shut(void)
 {
-	if(freq.shut>OS_MIN_10)
+	if((gbvar_get(GB_SLEEP) == 0)&&(status == SHOW))
 	{
 		status_to(SLEEP);
 	}
-	else
+	else if ((gbvar_get(GB_WAIT)==0) &&(status != SHOW))
 	{
-		if(status == SLEEP)
-		{
-			status_to(START);
-		}
+		status_to(SHOW);
 	}
 }

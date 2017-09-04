@@ -38,7 +38,9 @@ void task_500ms(void)
 		task_rtc();
 		task_temperature();
 		task_relay();
-		task_alarm();			
+		task_alarm();	
+		if(gbvar_get(GB_FLASH) == 0)
+			gbvar_set(GB_FLASH, OS_SEC_1);		
 		gui_led();
 	}
 }
@@ -78,12 +80,14 @@ void task_dynamic(void)
 void sys_init(void)
 {	
 	tm1640_init();
-	sys.ds18b20 = ds18b20_init();
-	ds1302_init();
 	beep_init();
 	while(os.jiffies<OS_SEC_05);
+	gbvar_init();
+	u8 tmp = ds18b20_init();
+	gbvar_set(GB_DS18B20,tmp);
 	eeprom_init();
-	status = START;
+	ds1302_init();
+	status = SHOW;
 }
 
 int main(void)
@@ -108,23 +112,7 @@ int main(void)
 /************************************************************************/
 void interrupt_systick(void)
 {
-
-   	if(freq.flash < OS_SEC_1)
-		freq.flash++;
-	else
-		freq.flash = 0;
-  
-  	if(freq.noflash)
-  		freq.noflash--;
-
-
-	freq.shut++;
-
-	freq.delay_key++;		//不怕溢出，无按键时会自动清零
-
-	if (freq.delay_beep)
-		freq.delay_beep--;
-	
+	gbvar_tmr();
 }
 /************************************************************************/
 /* 功能：定时时各种变量处理

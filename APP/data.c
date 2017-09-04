@@ -11,16 +11,12 @@
 RTC_t				time[2];
 ALARM_t 			alarm[MAX_ALARM];
 TEMP_t 				temperature;
-RELAY_t 			relay[3];
+RELAY_t 			relay[6];
 
 //状态变量
 STATUS_t			status;
 
 //其他结构体
-struct EVENT_t		event;
-struct FREQ_t		freq;
-struct SYS_t		sys;
-struct EXT_t		ext;
 struct OS_t			os;
 
 /************************************************************************/
@@ -44,8 +40,16 @@ int status_between(STATUS_t smaller, STATUS_t bigger)
 /************************************************************************/
 void status_to(STATUS_t sta)
 {
+	if(sta == RELAY1)	//从时间设置进入，先保存时间
+		rtc_write_time(time[1]);
+	else if((sta == SHOW)&&(status == ALARM))
+	{
+		//从睡眠或者闹钟进入，保存到eeprom
+		eeprom_record();
+	}
+
 	status = sta;
-	ext.relay=0;
-	ext.alarm=0;
-	ext.gui_offset=0;	  	
+	gbvar_clr(GB_RELAY);
+	gbvar_clr(GB_ALARM);
+	gbvar_clr(GB_GUI_OFFSET);  	
 }

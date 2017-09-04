@@ -8,19 +8,15 @@
 
 #include "main.h"
 /************************************************************************/
-/* 功能：三组继电器时钟   无使能状态，即上电后继电器不会自行启动 */
+/* 功能：每组继电器有8个u8时间，1个s16温度，共10字节 */
 /************************************************************************/
-EEMEM u8 mem_eep_relay[12] = {	
-							1,9,4,8,		//十位时，个位时，十位分，个位分
-							1,2,3,4,		//第二组
-							0,5,3,6
-};
+EEMEM u8 mem_eep_relay[30] = {0};
 
 /************************************************************************/
-/* 功能：温度    */
+/* 功能：温度，3组温度，对应三组继电器    */
 /************************************************************************/
 
-EEMEM u8 mem_eep_temp[] = {0,0};
+EEMEM u8 mem_eep_temp[3] = {0};
 
 /************************************************************************/
 /* 功能：9组闹钟  十个时，十个分，使能状态  */
@@ -39,14 +35,21 @@ void  eeprom_init(void)
 	addr = mem_eep_relay;
 	for(i=0; i<3; i++)
 	{
-		relay[i].hour10 = eeprom_read_byte(addr+4*i+0);
-		relay[i].hour1  = eeprom_read_byte(addr+4*i+1);
-		relay[i].min10 = eeprom_read_byte(addr+4*i+2);
-		relay[i].min1  = eeprom_read_byte(addr+4*i+3);
+		relay[i].time[0].hour10 = eeprom_read_byte(addr+8*i+0);
+		relay[i].time[0].hour1  = eeprom_read_byte(addr+8*i+1);
+		relay[i].time[0].min10  = eeprom_read_byte(addr+8*i+2);
+		relay[i].time[0].min1   = eeprom_read_byte(addr+8*i+3);
+
+		relay[i].time[1].hour10 = eeprom_read_byte(addr+8*i+4);
+		relay[i].time[1].hour1  = eeprom_read_byte(addr+8*i+5);
+		relay[i].time[1].min10  = eeprom_read_byte(addr+8*i+6);
+		relay[i].time[1].min1   = eeprom_read_byte(addr+8*i+7);
+
+		relay[i].temperature = (s16)(eeprom_read_byte(addr+8*i+8)<<8) + eeprom_read_byte(addr+8*i+9);
 	}
 
-	addr = mem_eep_temp;
-	temperature.max_stop = (u16)(eeprom_read_byte(addr+0)<<8) + eeprom_read_byte(addr+1);
+	//addr = mem_eep_temp;
+	//temperature.max_stop = (u16)(eeprom_read_byte(addr+0)<<8) + eeprom_read_byte(addr+1);
 
 	addr = mem_eep_alarm;
 	for(i=0; i<9; i++)
@@ -71,15 +74,23 @@ void eeprom_record(void)
 	addr = mem_eep_relay;
 	for(i=0; i<3; i++)
 	{
-		eeprom_write_byte(addr+4*i+0, relay[i].hour10);
-		eeprom_write_byte(addr+4*i+1, relay[i].hour1);
-		eeprom_write_byte(addr+4*i+2, relay[i].min10);
-		eeprom_write_byte(addr+4*i+3, relay[i].min1);
+		eeprom_write_byte(addr+8*i+0, relay[i].time[0].hour10);
+		eeprom_write_byte(addr+8*i+1, relay[i].time[0].hour1);
+		eeprom_write_byte(addr+8*i+2, relay[i].time[0].min10);
+		eeprom_write_byte(addr+8*i+3, relay[i].time[0].min1);
+
+		eeprom_write_byte(addr+8*i+4, relay[i].time[1].hour10);
+		eeprom_write_byte(addr+8*i+5, relay[i].time[1].hour1);
+		eeprom_write_byte(addr+8*i+6, relay[i].time[1].min10);
+		eeprom_write_byte(addr+8*i+7, relay[i].time[1].min1);
+
+		eeprom_write_byte(addr+8*i+8, relay[i].temperature>>8);
+		eeprom_write_byte(addr+8*i+8, relay[i].temperature);
 	}
 
-	addr = mem_eep_temp;
-	eeprom_write_byte(addr, temperature.max_stop>>8);
-	eeprom_write_byte(addr+1, temperature.max_stop);
+//	addr = mem_eep_temp;
+//	eeprom_write_byte(addr, temperature.max_stop>>8);
+//	eeprom_write_byte(addr+1, temperature.max_stop);
 
 	addr = mem_eep_alarm;
 	for(i=0; i<9; i++)

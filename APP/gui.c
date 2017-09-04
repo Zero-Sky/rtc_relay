@@ -122,6 +122,7 @@ static void gui_led_sec(u8 sec10, u8 sec1)
 /************************************************************************/
 static void gui_led_run(void)
 {
+#if 0
 	static u8 offset=0;
 	for (u8 i=2; i<=5; i++)
 	{
@@ -132,15 +133,22 @@ static void gui_led_run(void)
 
 	offset++;
 	if(offset>5)	offset=0;
+#endif
+	buf_gui[8] = pgm_read_byte(&mem_led_num[0]);
+	buf_gui[14] = pgm_read_byte(&mem_led_num[17]);
 }
 static void gui_led_stop(void)
 {
+#if 0
 	for (u8 i=2; i<=5; i++)
 	{
 		buf_gui[i] = 0x40;
 	}
 	buf_gui[9] = 0x40;
 	buf_gui[10] = 0x40;
+#endif
+	buf_gui[8] = pgm_read_byte(&mem_led_num[0]);
+	buf_gui[14] = pgm_read_byte(&mem_led_num[11]);
 }
 /************************************************************************/
 /* 功能：闪烁对应位
@@ -150,7 +158,7 @@ static void gui_led_stop(void)
 /************************************************************************/
 static void gui_led_flash(u8 offset)
 {
-	if (freq.flash <OS_SEC_05)
+	if (gbvar_get(GB_FLASH) > OS_SEC_05)	//bug 不能小于？？
 	{
 		switch(offset)
 		{
@@ -253,27 +261,29 @@ static void gui_led_temperature(vs16 data)
 /************************************************************************/
 static void gui_led_rtc(void)
 {
-	if (ext.gui_offset == 0)
-	{
-		gui_led_year(time[0].year10, time[0].year1);
-		gui_led_month(time[0].month10, time[0].month1);
-		gui_led_date(time[0].date10, time[0].date1);
-		gui_led_hour(time[0].hour10,time[0].hour1);
-		gui_led_min(time[0].min10, time[0].min1);
-		gui_led_sec(time[0].sec10, time[0].sec1);	
-	}
-	else
-	{
-		gui_led_year(time[1].year10, time[1].year1);
-		gui_led_month(time[1].month10, time[1].month1);
-		gui_led_date(time[1].date10, time[1].date1);
-		gui_led_hour(time[1].hour10,time[1].hour1);
-		gui_led_min(time[1].min10, time[1].min1);
-		gui_led_sec(time[1].sec10, time[1].sec1);		
-	}
+	gui_led_year(time[0].year10, time[0].year1);
+	gui_led_month(time[0].month10, time[0].month1);
+	gui_led_date(time[0].date10, time[0].date1);
+	gui_led_hour(time[0].hour10,time[0].hour1);
+	gui_led_min(time[0].min10, time[0].min1);
+	gui_led_sec(time[0].sec10, time[0].sec1);	
+}
+/************************************************************************/
+/* 功能：显示设置时间
+ * 描述：来自RTC
+ * 形参：
+ * 返回：                  */
+/************************************************************************/
+static void gui_led_clock(void)
+{
+	gui_led_year(time[1].year10, time[1].year1);
+	gui_led_month(time[1].month10, time[1].month1);
+	gui_led_date(time[1].date10, time[1].date1);
+	gui_led_hour(time[1].hour10,time[1].hour1);
+	gui_led_min(time[1].min10, time[1].min1);
+	gui_led_sec(time[1].sec10, time[1].sec1);	
 	gui_led_num(0);
 }
-
 /************************************************************************/
 /* 功能：显示闹钟
  * 描述：年显示序号，A亮表示开启，D亮表示关闭
@@ -282,20 +292,25 @@ static void gui_led_rtc(void)
 /************************************************************************/
 static void gui_led_alarm(void)
 {
-	s8 offset = ext.alarm;
+	s8 offset = gbvar_get(GB_ALARM)-1;
+	if(offset <0)		return;
 
-	if(offset <=0)		return;
-	//闹钟序号，1~9
-	buf_gui[13] = pgm_read_byte(&mem_led_num[offset]);	
+	
 
-	if (alarm[offset-1].enable)		gui_led_run();		
+	if (alarm[offset].enable)		gui_led_run();		
 	else							gui_led_stop();
 
-	gui_led_hour(alarm[offset-1].hour10,alarm[offset-1].hour1);
-	gui_led_min(alarm[offset-1].min10, alarm[offset-1].min1);
-	gui_led_sec(0, 0);
+	gui_led_year(time[0].year10, time[0].year1);
+	gui_led_month(time[0].month10, time[0].month1);
+	gui_led_date(time[0].date10, time[0].date1);
 
-	gui_led_num(5);
+	gui_led_hour(alarm[offset].hour10,alarm[offset].hour1);
+	gui_led_min(alarm[offset].min10, alarm[offset].min1);
+
+	//闹钟序号，1~9
+	buf_gui[13] = pgm_read_byte(&mem_led_num[offset+1]);
+
+	gui_led_num(4);
 }
 
 /************************************************************************/
@@ -306,18 +321,29 @@ static void gui_led_alarm(void)
 /************************************************************************/
 static void gui_led_relay(void)
 {
-	vu8 offset = ext.relay;
-	if(offset<=0)		return;
+	vu8 offset = gbvar_get(GB_RELAY)-1;
+	if(offset<0)		return;
 
-	gui_led_num(offset);
-	gui_led_hour(relay[offset-1].hour10,relay[offset-1].hour1);
-	gui_led_min(relay[offset-1].min10, relay[offset-1].min1);
-	gui_led_sec(0, 0);
+	gui_led_num(offset+1);
+	gui_led_year(relay[offset].time[0].hour10,relay[offset].time[0].hour1);
+	gui_led_month(relay[offset].time[0].min10, relay[offset].time[0].min1);	
+	gui_led_hour(relay[offset].time[1].hour10,relay[offset].time[1].hour1);
+	gui_led_min(relay[offset].time[1].min10, relay[offset].time[1].min1);
+	gui_led_temperature(relay[offset].temperature);
 
-	if(relay[offset-1].enable)	gui_led_run();
+	if(relay[offset].enable)	gui_led_run();
 	else						gui_led_stop();
 }
-
+static void gui_led_relay2(void)
+{
+	if (relay[0].enable)	PORTD&=~0x02;
+	else					PORTD|=0x02;
+	if (relay[1].enable)	PORTD&=~0x04;
+	else					PORTD|=0x04;
+	if (relay[2].enable)	PORTD&=~0x08;
+	else					PORTD|=0x08;
+	
+}
 
 /************************************************************************/
 /* 功能：DEBUG
@@ -328,7 +354,7 @@ static void gui_led_relay(void)
 static void gui_led_debug(void)
 {
 	u8 arr[3];
-	num_to_array(3,ext.debug,arr);
+	num_to_array(3,gbvar_get(GB_DEBUG),arr);
 	buf_gui[11] = pgm_read_byte(&mem_led_num[arr[2]]);
 	buf_gui[12] = pgm_read_byte(&mem_led_num[arr[1]]);
 	buf_gui[13] = pgm_read_byte(&mem_led_num[arr[0]]);
@@ -350,6 +376,7 @@ void gui_led(void)
 	
 	switch (status)
 	{
+		case CLOCK:gui_led_clock();break;
 		case RELAY1:
 		case RELAY2:
 		case RELAY3:gui_led_relay();break;
@@ -358,9 +385,9 @@ void gui_led(void)
 		case SLEEP:break;
 		default:gui_led_rtc();gui_led_temperature(temperature.cur);break;
 	}
-	
-	if(freq.noflash == 0)
-		gui_led_flash(ext.gui_offset);
+	gui_led_relay2();
+	if(gbvar_get(GB_NOFLASH) == 0)
+		gui_led_flash(gbvar_get(GB_GUI_OFFSET));
 	gui_update();
 }
 
