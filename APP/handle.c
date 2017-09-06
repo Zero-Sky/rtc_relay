@@ -277,7 +277,29 @@ void btn_up(void)
 	if(status == SHOW)		return;
 	argv_set(1);
 }
-
+/************************************************************************/
+/* 功能：临时开关继电器
+ * 描述：
+ * 形参：继电器0,1,2
+ * 返回：                            */
+/************************************************************************/
+static void relay_switch_temp(u8 num)
+{
+	static u8 press = 0;
+	if(gbvar_get(GB_KEY_L1) == 0)
+	{
+		if (press == 0)
+		{
+			press = 1;
+			beep_on_long();
+			relay[num].open = ~relay[num].open;
+			if(relay[num].open)	relay[num].enable = 1;
+			else				relay[num].enable = 0;
+		}
+	}
+	else
+		press = 0;	
+}
 /************************************************************************/
 /* 功能：设置参数减
  * 描述：
@@ -286,7 +308,12 @@ void btn_up(void)
 /************************************************************************/
 void btn_down(void)
 {
-	if(status == SHOW)		return;
+	if(status == SHOW)
+	{
+		relay_switch_temp(1);
+		return;
+	}
+	
 	argv_set(0);
 }
 /************************************************************************/
@@ -316,7 +343,11 @@ void btn_ext(void)
 /************************************************************************/
 void btn_start(void)
 {
-	if(status == SHOW)		return;
+	if(status == SHOW)
+	{	
+		relay_switch_temp(0);
+		return;
+	}
 	u16 offset = gbvar_get(GB_ALARM) - 1;
 	switch(status)
 	{
@@ -336,7 +367,11 @@ void btn_start(void)
 /************************************************************************/
 void btn_right(void)
 {
-	if(status == SHOW)		return;
+	if(status == SHOW)
+	{
+		relay_switch_temp(2);
+		return;
+	}
 
 	gbvar_clr(GB_NOFLASH);
 

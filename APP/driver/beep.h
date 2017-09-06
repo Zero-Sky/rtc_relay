@@ -5,7 +5,7 @@ typedef enum 			//开启时间
 {
   	BEEP_SHORT  = (u16)OS_SEC_01,			//50ms
   	BEEP_MIDDLE = (u16)OS_SEC_03,			//300ms
-  	BEEP_LONG   = (u16)OS_SEC_04,  			//400ms
+  	BEEP_LONG   = (u16)OS_SEC_05,  			//400ms
 
 	BEEP_OFF_SHORT = (u16)OS_SEC_005,
 	BEEP_OFF_MIDDLE = (u16)OS_SEC_01,

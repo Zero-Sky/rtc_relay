@@ -32,7 +32,7 @@ typedef struct
 	vu8 		date10;			//日期
 	vu8			month1;
 	vu8			month10;
-	vu8			day;			//周几，bit计数,bit0~6代表礼拜日~礼拜6
+	//vu8			day;			//周几，bit计数,bit0~6代表礼拜日~礼拜6
 	vu8			year1;
 	vu8			year10;
 }RTC_t;
@@ -65,9 +65,9 @@ typedef struct
 //继电器控制，6组，12，34,56分别对应123继电器
 typedef struct
 {
-	vu8 		enable;			//=1，使能
-	vu8  		open;			//=1,继电器开
-	HM_t		time[2];		//0是开启时间，1是关闭时间	
+	vu8 			enable;			//=1，使能
+	vu8  			open;			//=1,继电器开
+	HM_t			time[2];		//0是开启时间，1是关闭时间	
 	vs16			temperature;	//高于该温度停止，=0时无效,-128~127
 }RELAY_t;
 

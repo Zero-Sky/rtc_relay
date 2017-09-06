@@ -44,6 +44,7 @@ static void relay_switch(u8 num, u8 open)
 /************************************************************************/
 void task_relay(void)
 {
+	u8 tmp_beep=0;
 	for(u8 i=0; i<3; i++)
 	{
 		if(relay[i].enable)
@@ -56,6 +57,7 @@ void task_relay(void)
 			&&(time[0].sec1 == 0))
 			{
 				relay[i].open = 1;
+				tmp_beep=1;
 			}
 			else if((time[0].hour10 == relay[i].time[1].hour10) \
 			&&(time[0].hour1 == relay[i].time[1].hour1) \
@@ -65,11 +67,15 @@ void task_relay(void)
 			&&(time[0].sec1 == 0))
 			{
 				relay[i].open = 0;
+				relay[i].enable = 0;
+				tmp_beep=1;
 			}
 			//温度设置不为0时有效
 			else if ((temperature.cur >= relay[i].temperature)&&(relay[i].temperature))
 			{
 				relay[i].open = 0;
+				relay[i].enable = 0;
+				tmp_beep=1;
 			}	
 		}
 		else
@@ -77,6 +83,10 @@ void task_relay(void)
 			relay[i].open = 0;
 		}
 		relay_switch(i, relay[i].open);
+		if (tmp_beep)
+		{
+			beep_on_long();
+		}
 	}
 }
 

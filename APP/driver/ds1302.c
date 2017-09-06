@@ -150,7 +150,7 @@ RTC_t rtc_read_time(void)
 	rtc.month1	= tmp[4]&0x0F;
 	rtc.month10	= (tmp[4]>>4)&0x0F;
 
-	rtc.day		= tmp[5]&0x0F;
+	u8 no		= tmp[5]&0x0F;
 
 	rtc.year1	= tmp[6]&0x0F;
 	rtc.year10	= (tmp[6]>>4)&0x0F;

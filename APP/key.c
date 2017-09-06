@@ -55,7 +55,7 @@ void key_deal_l(void)
 			case 2:btn_up();break;
 			case 5:btn_down();break;
 			case 6:btn_right();break;
-			//case 20:btn_sleep();break;
+			case 4:btn_start();break;
 			case 1:btn_set_input();break;
 			default:break;
 		}
@@ -69,13 +69,6 @@ void key_deal_l(void)
 /************************************************************************/
 static void key_deal_s(u8 key_now)
 {
-#if 0
-	if(status == SLEEP)
-	{
-		status_to(START);
-		return;
-	}
-#endif
 	os.prompt=1;
 	switch(key_now)
 	{
@@ -112,7 +105,7 @@ void key_deal(void)
 	else if(key_now != key.soft) 					//键值不等，包括松开(键值0)和新按键
 	{
 		gbvar_set(GB_KEY_L1,OS_SEC_2);
-		gbvar_set(GB_KEY_L2,OS_SEC_5);							//长按键计时关闭
+		//gbvar_set(GB_KEY_L2,OS_SEC_5);							//长按键计时关闭
 		gbvar_set(GB_SLEEP, OS_MIN_5);							//待机计时关闭
 		gbvar_set(GB_WAIT, OS_SEC_30);
 
