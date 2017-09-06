@@ -17,3 +17,7 @@
 #忽略说明文件
 *.txt
 
+#忽略visual studio 15的文件
+/obj
+/bin
+/.vs
