@@ -252,7 +252,7 @@ void btn_set(void)
 
 	switch(status)
 	{
-		case CLOCK:status_to(RELAY1);gbvar_set(GB_RELAY,1);break;
+		case CLOCK:status_to(SHOW);break;
 		case RELAY1:status_to(RELAY2);gbvar_set(GB_RELAY,2);break;
 		case RELAY2:status_to(RELAY3);gbvar_set(GB_RELAY,3);break;
 	#if 0
@@ -260,7 +260,7 @@ void btn_set(void)
 		case TEMP:status_to(ALARM);gbvar_set(GB_ALARM,1);gbvar_set(GB_GUI_OFFSET,8);break;
 	#endif
 		case RELAY3:status_to(ALARM);gbvar_set(GB_ALARM,1);gbvar_set(GB_GUI_OFFSET,8);break;
-		case ALARM:status_to(SHOW);break;
+		case ALARM:status_to(CLOCK);time[1] = time[0];break;
 		default:break;
 	}
 	beep_on_one();
@@ -439,8 +439,8 @@ void btn_set_input(void)
 {
 	if(status == SHOW)
 	{
-		status_to(CLOCK);
+		status_to(RELAY1);
+		gbvar_set(GB_RELAY,1);
 		beep_on_one();
-		time[1] = time[0];		//第一次进入时复制
 	}
 }

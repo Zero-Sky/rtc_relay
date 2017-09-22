@@ -32,6 +32,7 @@ int status_between(STATUS_t smaller, STATUS_t bigger)
 	else
 		return 0;	
 }
+
 /************************************************************************/
 /* 功能：切换status状态显示
  * 描述：有些切换要做一些显示或数据的改变
@@ -40,9 +41,9 @@ int status_between(STATUS_t smaller, STATUS_t bigger)
 /************************************************************************/
 void status_to(STATUS_t sta)
 {
-	if(sta == RELAY1)	//从时间设置进入，先保存时间
+	if(sta == SHOW)							//从时间设置进入，先保存时间
 		rtc_write_time(time[1]);
-	else if((sta == SHOW)&&(status == ALARM))
+	else if((sta == CLOCK)&&(status == ALARM))
 	{
 		//从睡眠或者闹钟进入，保存到eeprom
 		eeprom_record();

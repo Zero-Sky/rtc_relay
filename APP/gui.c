@@ -282,7 +282,7 @@ static void gui_led_clock(void)
 	gui_led_hour(time[1].hour10,time[1].hour1);
 	gui_led_min(time[1].min10, time[1].min1);
 	gui_led_sec(time[1].sec10, time[1].sec1);	
-	gui_led_num(0);
+	gui_led_num(5);
 }
 /************************************************************************/
 /* 功能：显示闹钟
