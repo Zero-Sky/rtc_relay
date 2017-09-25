@@ -41,11 +41,16 @@ int status_between(STATUS_t smaller, STATUS_t bigger)
 /************************************************************************/
 void status_to(STATUS_t sta)
 {
-	if(sta == SHOW)							//从时间设置进入，先保存时间
-		rtc_write_time(time[1]);
-	else if((sta == CLOCK)&&(status == ALARM))
+	if((status == CLOCK)&&(sta == SHOW))	//从时间设置进入，先保存时间
 	{
-		//从睡眠或者闹钟进入，保存到eeprom
+		rtc_write_time(time[1]);
+	}
+	else if((status == SLEEP)&&(sta == SHOW))		//从睡眠唤醒
+	{
+		eeprom_record();
+	}
+	else if((status == CLOCK)&&(sta == SHOW))
+	{
 		eeprom_record();
 	}
 
