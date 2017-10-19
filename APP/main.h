@@ -7,7 +7,7 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-/*********类型*************************************************/
+/*********类型,根据芯片类型修改**************************************/
 typedef unsigned char		u8;
 typedef unsigned int		u16;		//AVR的int是16位
 typedef unsigned long		u32;
@@ -21,6 +21,9 @@ typedef volatile unsigned long		vu32;
 typedef volatile signed char		vs8;
 typedef volatile signed int			vs16;
 typedef volatile signed long		vs32;
+
+//局部变量，8位机用8位，32位机用32位
+typedef signed char 		var_t;
 /*********************************************************************/
 /* 多字节分拆成单字节
  * union/struct固定是从低地址放到高地址。则对于数据0x76543210
